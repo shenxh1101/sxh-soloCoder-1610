@@ -3,29 +3,54 @@ import { useAppStore } from '@/store';
 import { REPAIR_TYPES } from '@/types';
 import styles from './index.module.css';
 
+const emptyStats = {
+  totalOrders: 0,
+  pendingOrders: 0,
+  processingOrders: 0,
+  completedOrders: 0,
+  avgResponseTime: 0,
+  avgCompleteTime: 0,
+  completionRate: 0,
+  typeStats: REPAIR_TYPES.map(t => ({ type: t.value, typeName: t.label, count: 0, percentage: 0 })),
+  monthlyStats: [
+    { month: '1月', count: 0 }, { month: '2月', count: 0 }, { month: '3月', count: 0 },
+    { month: '4月', count: 0 }, { month: '5月', count: 0 }, { month: '6月', count: 0 }
+  ],
+  responseTimeDistribution: [
+    { range: '0-15分钟', count: 0 }, { range: '15-30分钟', count: 0 },
+    { range: '30-60分钟', count: 0 }, { range: '1小时以上', count: 0 }
+  ]
+};
+
 export default function Statistics() {
   const { 
-    getStatistics, 
+    statistics,
+    statisticsLoading,
     getWorkerStats, 
     exportOrders, 
     exportStatistics,
     fetchStatistics,
     fetchOrders,
-    fetchWorkers
+    fetchWorkers,
+    fetchWorkerStats
   } = useAppStore();
   
-  const stats = useMemo(() => getStatistics(), [getStatistics]);
-  const workerStats = useMemo(() => getWorkerStats(), [getWorkerStats]);
+  const stats = statistics || emptyStats;
+  const workerStats = useMemo(() => getWorkerStats(), [getWorkerStats, statistics]);
 
   useEffect(() => {
-    fetchStatistics();
+    // 只有在没有数据的时候才加载，避免切换页面重复请求
+    if (!statistics) {
+      fetchStatistics();
+    }
     fetchOrders();
     fetchWorkers();
-  }, [fetchStatistics, fetchOrders, fetchWorkers]);
+    fetchWorkerStats();
+  }, [fetchStatistics, fetchOrders, fetchWorkers, fetchWorkerStats, statistics]);
 
   const handleExportDetail = () => {
     const csv = exportOrders();
-    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -36,7 +61,7 @@ export default function Statistics() {
 
   const handleExportReport = () => {
     const report = exportStatistics();
-    const blob = new Blob([report], { type: 'text/plain;charset=utf-8;' });
+    const blob = new Blob(['\uFEFF' + report], { type: 'text/plain;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -45,7 +70,7 @@ export default function Statistics() {
     URL.revokeObjectURL(url);
   };
 
-  if (!stats) {
+  if (statisticsLoading && !statistics) {
     return (
       <div className={styles.page}>
         <div className={styles.loading}>加载中...</div>
@@ -55,6 +80,7 @@ export default function Statistics() {
 
   const maxTypeCount = Math.max(...stats.typeStats.map(t => t.count), 1);
   const maxMonthCount = Math.max(...stats.monthlyStats.map(m => m.count), 1);
+  const maxResponseCount = Math.max(...stats.responseTimeDistribution.map(r => r.count), 1);
 
   return (
     <div className={styles.page}>
@@ -158,7 +184,7 @@ export default function Statistics() {
                 <div className={styles.responseBar}>
                   <div 
                     className={styles.responseBarFill}
-                    style={{ width: `${(item.count / 156) * 100}%` }}
+                    style={{ width: `${maxResponseCount > 0 ? (item.count / maxResponseCount) * 100 : 0}%` }}
                   />
                 </div>
                 <div className={styles.responseCount}>{item.count}单</div>

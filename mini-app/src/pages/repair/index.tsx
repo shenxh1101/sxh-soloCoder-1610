@@ -53,7 +53,7 @@ const RepairPage: React.FC = () => {
     setIsUrgent(!isUrgent);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedType) {
       Taro.showToast({ title: '请选择报修类型', icon: 'none' });
       return;
@@ -65,18 +65,18 @@ const RepairPage: React.FC = () => {
 
     setSubmitting(true);
     
-    setTimeout(() => {
-      const typeInfo = REPAIR_TYPES.find(t => t.value === selectedType)!;
-      const newOrder = submitRepair({
-        type: selectedType,
-        typeName: typeInfo.label,
-        description: description.trim(),
-        images,
-        urgent: isUrgent
-      });
+    const typeInfo = REPAIR_TYPES.find(t => t.value === selectedType)!;
+    const newOrder = await submitRepair({
+      type: selectedType,
+      typeName: typeInfo.label,
+      description: description.trim(),
+      images,
+      urgent: isUrgent
+    });
 
-      setSubmitting(false);
-      
+    setSubmitting(false);
+    
+    if (newOrder) {
       Taro.showToast({
         title: '提交成功',
         icon: 'success',
@@ -92,7 +92,9 @@ const RepairPage: React.FC = () => {
         setIsUrgent(false);
         Taro.switchTab({ url: '/pages/orders/index' });
       }, 1500);
-    }, 500);
+    } else {
+      Taro.showToast({ title: '提交失败，请重试', icon: 'none' });
+    }
   };
 
   const canSubmit = selectedType && description.trim().length > 0 && !submitting;

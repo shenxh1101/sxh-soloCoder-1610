@@ -55,7 +55,7 @@ const RatingPage: React.FC = () => {
     return ratingTags[2];
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!orderId) return;
     if (rating === 0) {
       Taro.showToast({ title: '请选择评分', icon: 'none' });
@@ -63,23 +63,23 @@ const RatingPage: React.FC = () => {
     }
 
     setSubmitting(true);
-    setTimeout(() => {
-      const finalContent = content || selectedTags.join('、');
-      const success = rateOrder(orderId, rating, finalContent);
-      setSubmitting(false);
+    const finalContent = content || selectedTags.join('、');
+    const success = await rateOrder(orderId, rating, finalContent);
+    setSubmitting(false);
 
-      if (success) {
-        Taro.showToast({
-          title: '评价成功',
-          icon: 'success',
-          duration: 2000
-        });
-        console.log('[Rating] 评价提交:', rating, '星,', finalContent);
-        setTimeout(() => {
-          Taro.navigateBack();
-        }, 1500);
-      }
-    }, 500);
+    if (success) {
+      Taro.showToast({
+        title: '评价成功',
+        icon: 'success',
+        duration: 2000
+      });
+      console.log('[Rating] 评价提交:', rating, '星,', finalContent);
+      setTimeout(() => {
+        Taro.navigateBack();
+      }, 1500);
+    } else {
+      Taro.showToast({ title: '评价失败', icon: 'none' });
+    }
   };
 
   const displayTags = getDisplayTags();

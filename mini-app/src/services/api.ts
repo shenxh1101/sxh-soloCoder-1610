@@ -1,6 +1,7 @@
+import Taro from '@tarojs/taro';
 import { RepairOrder, UserInfo, StatisticsData } from '@/types';
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3002/api';
+const API_BASE = 'http://localhost:3002/api';
 
 interface ApiResponse<T> {
   code: number;
@@ -8,27 +9,36 @@ interface ApiResponse<T> {
   data: T;
 }
 
-async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API_BASE}${url}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers
+async function request<T>(url: string, options: Taro.request.Option = {}): Promise<T> {
+  try {
+    const response = await Taro.request<ApiResponse<T>>({
+      url: `${API_BASE}${url}`,
+      method: options.method || 'GET',
+      data: options.data,
+      header: {
+        'Content-Type': 'application/json',
+        ...options.header
+      },
+      timeout: 10000
+    });
+
+    if (response.statusCode !== 200) {
+      throw new Error(`HTTP错误: ${response.statusCode}`);
     }
-  });
-  
-  const result: ApiResponse<T> = await response.json();
-  
-  if (result.code !== 0) {
-    throw new Error(result.message || '请求失败');
+
+    const result = response.data;
+    if (result.code !== 0) {
+      throw new Error(result.message || '请求失败');
+    }
+
+    return result.data;
+  } catch (error) {
+    console.error('[API] 请求失败:', url, error);
+    throw error;
   }
-  
-  return result.data;
 }
 
-// 工单相关 API
 export const orderApi = {
-  // 获取工单列表
   getList: (params?: {
     status?: string;
     type?: string;
@@ -42,18 +52,17 @@ export const orderApi = {
     if (params?.urgent) searchParams.set('urgent', 'true');
     if (params?.keyword) searchParams.set('keyword', params.keyword);
     if (params?.workerId) searchParams.set('workerId', params.workerId);
-    
+
+    const query = searchParams.toString();
     return request<{ list: RepairOrder[]; total: number }>(
-      `/orders?${searchParams.toString()}`
+      query ? `/orders?${query}` : '/orders'
     );
   },
 
-  // 获取工单详情
   getDetail: (id: string) => {
     return request<RepairOrder>(`/orders/${id}`);
   },
 
-  // 创建工单
   create: (data: {
     type: string;
     typeName: string;
@@ -66,77 +75,65 @@ export const orderApi = {
   }) => {
     return request<RepairOrder>('/orders', {
       method: 'POST',
-      body: JSON.stringify(data)
+      data
     });
   },
 
-  // 分配工单
   assign: (id: string, workerId: string, operatorName?: string) => {
     return request<RepairOrder>(`/orders/${id}/assign`, {
       method: 'PUT',
-      body: JSON.stringify({ workerId, operatorName })
+      data: { workerId, operatorName }
     });
   },
 
-  // 接单
   accept: (id: string) => {
     return request<RepairOrder>(`/orders/${id}/accept`, {
       method: 'PUT'
     });
   },
 
-  // 出发维修
   depart: (id: string) => {
     return request<RepairOrder>(`/orders/${id}/depart`, {
       method: 'PUT'
     });
   },
 
-  // 开始维修
   start: (id: string) => {
     return request<RepairOrder>(`/orders/${id}/start`, {
       method: 'PUT'
     });
   },
 
-  // 完工
   complete: (id: string, data?: { repairDescription?: string; repairImages?: string[] }) => {
     return request<RepairOrder>(`/orders/${id}/complete`, {
       method: 'PUT',
-      body: JSON.stringify(data || {})
+      data: data || {}
     });
   },
 
-  // 评价
   rate: (id: string, rating: number, ratingContent?: string) => {
     return request<RepairOrder>(`/orders/${id}/rate`, {
       method: 'PUT',
-      body: JSON.stringify({ rating, ratingContent })
+      data: { rating, ratingContent }
     });
   }
 };
 
-// 维修师傅 API
 export const workerApi = {
-  // 获取师傅列表
   getList: () => {
     return request<UserInfo[]>('/workers');
   },
 
-  // 获取师傅详情
   getDetail: (id: string) => {
     return request<UserInfo>(`/workers/${id}`);
   }
 };
 
-// 统计 API
 export const statisticsApi = {
-  // 获取统计数据
   getOverview: () => {
     return request<StatisticsData>('/statistics');
   },
 
-  // 获取师傅工作量统计
   getWorkerStats: () => {
     return request<Array<{ worker: UserInfo; orderCount: number; completedCount: number; avgRating: number }>>(
       '/statistics/workers'

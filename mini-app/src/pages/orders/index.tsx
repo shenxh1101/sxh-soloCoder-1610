@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import Taro, { useDidShow } from '@tarojs/taro';
 import classNames from 'classnames';
 import { useAppStore } from '@/store';
 import { OrderStatus } from '@/types';
@@ -16,18 +16,29 @@ const tabs: TabItem[] = [
   { key: 'all', label: '全部' },
   { key: 'pending', label: '待分配' },
   { key: 'assigned', label: '待接单' },
+  { key: 'accepted', label: '已接单' },
+  { key: 'departed', label: '已出发' },
   { key: 'processing', label: '维修中' },
   { key: 'completed', label: '待评价' },
   { key: 'rated', label: '已完成' }
 ];
 
 const OrdersPage: React.FC = () => {
-  const { getOrdersByRole, currentUser } = useAppStore();
+  const { getOrdersByRole, currentUser, refreshOrders } = useAppStore();
   const [activeTab, setActiveTab] = useState<OrderStatus | 'all'>('all');
   const [orders, setOrders] = useState<any[]>([]);
   const [onlyUrgent, setOnlyUrgent] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const loadOrders = useCallback(() => {
+  const loadOrders = useCallback(async () => {
+    try {
+      setRefreshing(true);
+      await refreshOrders();
+    } catch (e) {
+      console.error('刷新订单失败', e);
+    } finally {
+      setRefreshing(false);
+    }
     let result = getOrdersByRole();
     
     if (activeTab !== 'all') {
@@ -39,15 +50,20 @@ const OrdersPage: React.FC = () => {
     }
     
     setOrders(result);
-  }, [getOrdersByRole, activeTab, onlyUrgent]);
+  }, [getOrdersByRole, activeTab, onlyUrgent, refreshOrders]);
 
   useEffect(() => {
     loadOrders();
-  }, [loadOrders, currentUser.role]);
+  }, [activeTab, onlyUrgent, currentUser.role]);
+
+  // 页面每次显示时刷新
+  useDidShow(() => {
+    loadOrders();
+  });
 
   useEffect(() => {
-    const pullDownRefreshHandler = () => {
-      loadOrders();
+    const pullDownRefreshHandler = async () => {
+      await loadOrders();
       Taro.stopPullDownRefresh();
     };
     Taro.onPullDownRefresh(pullDownRefreshHandler);

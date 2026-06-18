@@ -1,30 +1,63 @@
 [
   {
-    "id": "80b3fd8e-65be-44eb-b129-e419eef82f8a",
-    "orderNo": "WD202606190708",
+    "id": "e13d5cf9-2f4e-43c0-a85c-ba986dee9ac6",
+    "orderNo": "WD202606190477",
     "type": "water_electric",
-    "typeName": "????",
-    "description": "?????? - ???????",
-    "images": [],
-    "urgent": false,
-    "status": "pending",
-    "statusName": "待分配",
-    "ownerName": "????",
-    "ownerPhone": "13800000000",
-    "address": "?????????",
-    "submitTime": "2026-06-18 18:01:13",
+    "typeName": "水电维修",
+    "description": "主卧空调不制冷，需要紧急维修",
+    "images": [
+      "https://img1.example.com/aircon1.jpg",
+      "https://img2.example.com/aircon2.jpg"
+    ],
+    "urgent": true,
+    "status": "processing",
+    "statusName": "维修中",
+    "ownerName": "赵女士",
+    "ownerPhone": "13800001111",
+    "address": "阳光花园小区5栋1单元602室",
+    "submitTime": "2026-06-18 18:41:54",
     "repairImages": [],
     "progress": [
       {
         "status": "pending",
-        "time": "2026-06-18 18:01:13",
-        "description": "工单已提交，等待分配",
-        "operator": "????"
+        "time": "2026-06-18 18:41:54",
+        "description": "紧急工单已提交，等待优先处理",
+        "operator": "赵女士"
+      },
+      {
+        "status": "assigned",
+        "time": "2026-06-18 18:46:04",
+        "description": "工单已分配给李师傅",
+        "operator": "客服"
+      },
+      {
+        "status": "accepted",
+        "time": "2026-06-18 18:46:24",
+        "description": "李师傅已接单，请等待出发",
+        "operator": "李师傅"
+      },
+      {
+        "status": "departed",
+        "time": "2026-06-18 18:46:24",
+        "description": "李师傅已出发，正在前往现场",
+        "operator": "李师傅"
+      },
+      {
+        "status": "processing",
+        "time": "2026-06-18 18:46:24",
+        "description": "李师傅已到达现场，开始维修",
+        "operator": "李师傅"
       }
-    ]
+    ],
+    "assignTime": "2026-06-18 18:46:04",
+    "workerId": "worker001",
+    "workerName": "李师傅",
+    "workerPhone": "13900139001",
+    "acceptTime": "2026-06-18 18:46:24",
+    "departTime": "2026-06-18 18:46:24"
   },
   {
-    "id": "2bf9c4ba-463d-4956-a295-c5e860faece0",
+    "id": "2f879859-de27-4e32-9cc4-628efbc2e31b",
     "orderNo": "WD202606190001",
     "type": "water_electric",
     "typeName": "水电维修",
@@ -34,14 +67,15 @@
       "https://picsum.photos/id/312/600/400"
     ],
     "urgent": true,
-    "status": "processing",
-    "statusName": "维修中",
+    "status": "departed",
+    "statusName": "已出发",
     "ownerName": "张先生",
     "ownerPhone": "13800138000",
     "address": "阳光花园小区1栋2单元301室",
     "submitTime": "2026-06-19 08:30:00",
     "assignTime": "2026-06-19 08:45:00",
-    "acceptTime": "2026-06-19 09:00:00",
+    "acceptTime": "2026-06-19 08:50:00",
+    "departTime": "2026-06-19 09:00:00",
     "workerName": "李师傅",
     "workerPhone": "13900139001",
     "workerId": "worker001",
@@ -50,7 +84,7 @@
       {
         "status": "pending",
         "time": "2026-06-19 08:30:00",
-        "description": "工单已提交，等待分配",
+        "description": "紧急工单已提交，等待优先处理",
         "operator": "张先生"
       },
       {
@@ -60,15 +94,57 @@
         "operator": "客服小王"
       },
       {
-        "status": "processing",
+        "status": "accepted",
+        "time": "2026-06-19 08:50:00",
+        "description": "李师傅已接单，请等待出发",
+        "operator": "李师傅"
+      },
+      {
+        "status": "departed",
         "time": "2026-06-19 09:00:00",
-        "description": "李师傅已接单，正在前往维修",
+        "description": "李师傅已出发，正在前往现场",
         "operator": "李师傅"
       }
     ]
   },
   {
-    "id": "49c67800-14ee-47ff-94a4-51983e29c055",
+    "id": "59939b14-4457-4330-8c0e-434c97635454",
+    "orderNo": "WD202606190002",
+    "type": "access_control",
+    "typeName": "门禁维修",
+    "description": "单元门门禁刷卡没反应，按门铃也不响，进出很不方便",
+    "images": [
+      "https://picsum.photos/id/160/600/400"
+    ],
+    "urgent": false,
+    "status": "assigned",
+    "statusName": "待接单",
+    "ownerName": "周女士",
+    "ownerPhone": "13800138006",
+    "address": "阳光花园小区5栋2单元",
+    "submitTime": "2026-06-19 09:15:00",
+    "assignTime": "2026-06-19 09:30:00",
+    "workerName": "张师傅",
+    "workerPhone": "13900139004",
+    "workerId": "worker004",
+    "repairImages": [],
+    "progress": [
+      {
+        "status": "pending",
+        "time": "2026-06-19 09:15:00",
+        "description": "工单已提交，等待分配",
+        "operator": "周女士"
+      },
+      {
+        "status": "assigned",
+        "time": "2026-06-19 09:30:00",
+        "description": "工单已分配给张师傅",
+        "operator": "客服小王"
+      }
+    ]
+  },
+  {
+    "id": "d3a611be-4822-44ed-a46b-1d1b8ed5b228",
     "orderNo": "WD202606180023",
     "type": "access_control",
     "typeName": "门禁维修",
@@ -84,7 +160,8 @@
     "address": "阳光花园小区2栋1单元101室",
     "submitTime": "2026-06-18 14:20:00",
     "assignTime": "2026-06-18 14:35:00",
-    "acceptTime": "2026-06-18 15:00:00",
+    "acceptTime": "2026-06-18 14:40:00",
+    "departTime": "2026-06-18 14:50:00",
     "completeTime": "2026-06-18 16:30:00",
     "rateTime": "2026-06-18 19:00:00",
     "workerName": "王师傅",
@@ -110,9 +187,21 @@
         "operator": "客服小王"
       },
       {
+        "status": "accepted",
+        "time": "2026-06-18 14:40:00",
+        "description": "王师傅已接单，请等待出发",
+        "operator": "王师傅"
+      },
+      {
+        "status": "departed",
+        "time": "2026-06-18 14:50:00",
+        "description": "王师傅已出发，正在前往现场",
+        "operator": "王师傅"
+      },
+      {
         "status": "processing",
-        "time": "2026-06-18 15:00:00",
-        "description": "王师傅已接单，开始维修",
+        "time": "2026-06-18 15:10:00",
+        "description": "王师傅已到达现场，开始维修",
         "operator": "王师傅"
       },
       {
@@ -130,7 +219,7 @@
     ]
   },
   {
-    "id": "11327587-0f7c-4124-940e-ce76199658b3",
+    "id": "21e33ef0-cfe1-47a8-90d6-2da1e682712d",
     "orderNo": "WD202606170045",
     "type": "elevator",
     "typeName": "电梯维修",
@@ -144,7 +233,8 @@
     "address": "阳光花园小区3栋3单元",
     "submitTime": "2026-06-17 10:00:00",
     "assignTime": "2026-06-17 10:10:00",
-    "acceptTime": "2026-06-17 10:30:00",
+    "acceptTime": "2026-06-17 10:15:00",
+    "departTime": "2026-06-17 10:20:00",
     "completeTime": "2026-06-17 14:00:00",
     "rateTime": "2026-06-17 18:30:00",
     "workerName": "赵师傅",
@@ -160,7 +250,7 @@
       {
         "status": "pending",
         "time": "2026-06-17 10:00:00",
-        "description": "工单已提交，等待分配",
+        "description": "紧急工单已提交，等待优先处理",
         "operator": "陈先生"
       },
       {
@@ -170,8 +260,20 @@
         "operator": "客服主管"
       },
       {
+        "status": "accepted",
+        "time": "2026-06-17 10:15:00",
+        "description": "赵师傅已接单，请等待出发",
+        "operator": "赵师傅"
+      },
+      {
+        "status": "departed",
+        "time": "2026-06-17 10:20:00",
+        "description": "赵师傅已出发，正在前往现场",
+        "operator": "赵师傅"
+      },
+      {
         "status": "processing",
-        "time": "2026-06-17 10:30:00",
+        "time": "2026-06-17 10:40:00",
         "description": "赵师傅已到达现场，开始检修",
         "operator": "赵师傅"
       },
@@ -186,6 +288,32 @@
         "time": "2026-06-17 18:30:00",
         "description": "业主已评价（5星）",
         "operator": "陈先生"
+      }
+    ]
+  },
+  {
+    "id": "7cf37d99-e509-4844-a9a5-f6da04a8c0de",
+    "orderNo": "WD202606190003",
+    "type": "other",
+    "typeName": "其他",
+    "description": "楼道灯不亮，晚上上下楼很不方便",
+    "images": [
+      "https://picsum.photos/id/175/600/400"
+    ],
+    "urgent": false,
+    "status": "pending",
+    "statusName": "待分配",
+    "ownerName": "吴先生",
+    "ownerPhone": "13800138007",
+    "address": "阳光花园小区4栋1单元",
+    "submitTime": "2026-06-19 09:45:00",
+    "repairImages": [],
+    "progress": [
+      {
+        "status": "pending",
+        "time": "2026-06-19 09:45:00",
+        "description": "工单已提交，等待分配",
+        "operator": "吴先生"
       }
     ]
   }

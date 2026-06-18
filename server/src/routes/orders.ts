@@ -237,15 +237,15 @@ router.put('/:id/accept', (req: Request, res: Response) => {
     const acceptTime = now();
     const updatedOrder: RepairOrder = {
       ...order,
-      status: 'processing',
-      statusName: ORDER_STATUS.processing.label,
+      status: 'accepted',
+      statusName: ORDER_STATUS.accepted.label,
       acceptTime,
       progress: [
         ...order.progress,
         {
-          status: 'processing',
+          status: 'accepted',
           time: acceptTime,
-          description: `${order.workerName}已接单，正在前往维修`,
+          description: `${order.workerName}已接单，请等待出发`,
           operator: order.workerName
         }
       ]
@@ -267,6 +267,103 @@ router.put('/:id/accept', (req: Request, res: Response) => {
   }
 });
 
+// 出发维修（维修师傅）
+router.put('/:id/depart', (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const orders = readOrders();
+    const orderIndex = orders.findIndex(o => o.id === id);
+    
+    if (orderIndex === -1) {
+      return res.status(404).json({ code: 404, message: '工单不存在' });
+    }
+    
+    const order = orders[orderIndex];
+    if (order.status !== 'accepted') {
+      return res.status(400).json({ code: 400, message: '工单状态不允许出发' });
+    }
+    
+    const departTime = now();
+    const updatedOrder: RepairOrder = {
+      ...order,
+      status: 'departed',
+      statusName: ORDER_STATUS.departed.label,
+      departTime,
+      progress: [
+        ...order.progress,
+        {
+          status: 'departed',
+          time: departTime,
+          description: `${order.workerName}已出发，正在前往现场`,
+          operator: order.workerName
+        }
+      ]
+    };
+    
+    orders[orderIndex] = updatedOrder;
+    writeOrders(orders);
+    
+    console.log('[API] 师傅已出发:', order.orderNo);
+    
+    res.json({
+      code: 0,
+      message: '出发成功',
+      data: updatedOrder
+    });
+  } catch (error) {
+    console.error('出发失败:', error);
+    res.status(500).json({ code: 500, message: '出发失败' });
+  }
+});
+
+// 开始维修（到达现场）
+router.put('/:id/start', (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const orders = readOrders();
+    const orderIndex = orders.findIndex(o => o.id === id);
+    
+    if (orderIndex === -1) {
+      return res.status(404).json({ code: 404, message: '工单不存在' });
+    }
+    
+    const order = orders[orderIndex];
+    if (order.status !== 'departed') {
+      return res.status(400).json({ code: 400, message: '工单状态不允许开始维修' });
+    }
+    
+    const startTime = now();
+    const updatedOrder: RepairOrder = {
+      ...order,
+      status: 'processing',
+      statusName: ORDER_STATUS.processing.label,
+      progress: [
+        ...order.progress,
+        {
+          status: 'processing',
+          time: startTime,
+          description: `${order.workerName}已到达现场，开始维修`,
+          operator: order.workerName
+        }
+      ]
+    };
+    
+    orders[orderIndex] = updatedOrder;
+    writeOrders(orders);
+    
+    console.log('[API] 开始维修:', order.orderNo);
+    
+    res.json({
+      code: 0,
+      message: '开始维修成功',
+      data: updatedOrder
+    });
+  } catch (error) {
+    console.error('开始维修失败:', error);
+    res.status(500).json({ code: 500, message: '开始维修失败' });
+  }
+});
+
 // 完工（维修师傅）
 router.put('/:id/complete', (req: Request, res: Response) => {
   try {
@@ -281,7 +378,7 @@ router.put('/:id/complete', (req: Request, res: Response) => {
     }
     
     const order = orders[orderIndex];
-    if (order.status !== 'processing') {
+    if (order.status !== 'processing' && order.status !== 'departed' && order.status !== 'accepted') {
       return res.status(400).json({ code: 400, message: '工单状态不允许完工' });
     }
     

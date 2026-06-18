@@ -1,30 +1,43 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, Image, Button, ScrollView } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import Taro, { useDidShow } from '@tarojs/taro';
 import { useAppStore } from '@/store';
 import { REPAIR_TYPES } from '@/types';
 import OrderCard from '@/components/OrderCard';
 import styles from './index.module.scss';
 
 const HomePage: React.FC = () => {
-  const { currentUser, switchRole, getOrdersByRole, getStatistics } = useAppStore();
+  const { currentUser, switchRole, getOrdersByRole, getStatistics, refreshAll } = useAppStore();
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [urgentCount, setUrgentCount] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-  const loadData = useCallback(() => {
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      await refreshAll();
+    } catch (e) {
+      console.error('刷新数据失败', e);
+    } finally {
+      setLoading(false);
+    }
     const orders = getOrdersByRole();
     setRecentOrders(orders.slice(0, 3));
     setUrgentCount(orders.filter(o => o.urgent && o.status !== 'rated').length);
     setStats(getStatistics());
-  }, [getOrdersByRole, getStatistics]);
+  }, [getOrdersByRole, getStatistics, refreshAll]);
 
   useEffect(() => {
     loadData();
-  }, [loadData, currentUser.role]);
+  }, [currentUser.role]);
 
-  const handleRefresh = () => {
+  useDidShow(() => {
     loadData();
+  });
+
+  const handleRefresh = async () => {
+    await loadData();
     Taro.stopPullDownRefresh();
   };
 

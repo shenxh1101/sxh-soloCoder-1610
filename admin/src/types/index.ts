@@ -2,7 +2,7 @@
 export type RepairType = 'water_electric' | 'access_control' | 'elevator' | 'other';
 
 // 工单状态
-export type OrderStatus = 'pending' | 'assigned' | 'processing' | 'completed' | 'rated';
+export type OrderStatus = 'pending' | 'assigned' | 'accepted' | 'departed' | 'processing' | 'completed' | 'rated';
 
 // 用户角色
 export type UserRole = 'owner' | 'worker' | 'admin';
@@ -42,6 +42,7 @@ export interface RepairOrder {
   submitTime: string;
   assignTime?: string;
   acceptTime?: string;
+  departTime?: string;
   completeTime?: string;
   rateTime?: string;
   workerName?: string;
@@ -80,6 +81,8 @@ export const REPAIR_TYPES: { value: RepairType; label: string; icon: string; col
 export const ORDER_STATUS: Record<OrderStatus, { label: string; color: string; bgColor: string }> = {
   pending: { label: '待分配', color: '#ff7d00', bgColor: '#fff7e6' },
   assigned: { label: '待接单', color: '#1677ff', bgColor: '#e6f4ff' },
+  accepted: { label: '已接单', color: '#2f54eb', bgColor: '#f0f5ff' },
+  departed: { label: '已出发', color: '#531dab', bgColor: '#f9f0ff' },
   processing: { label: '维修中', color: '#722ed1', bgColor: '#f9f0ff' },
   completed: { label: '待评价', color: '#00b42a', bgColor: '#f6ffed' },
   rated: { label: '已完成', color: '#86909c', bgColor: '#f2f3f5' }

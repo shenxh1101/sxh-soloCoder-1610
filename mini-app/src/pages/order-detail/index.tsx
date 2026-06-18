@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, Image, Button, Textarea, ScrollView } from '@tarojs/components';
-import Taro, { useRouter } from '@tarojs/taro';
+import Taro, { useRouter, useDidShow } from '@tarojs/taro';
 import classNames from 'classnames';
 import { useAppStore } from '@/store';
 import { RepairOrder, ORDER_STATUS } from '@/types';
@@ -8,61 +8,122 @@ import styles from './index.module.scss';
 
 const OrderDetailPage: React.FC = () => {
   const router = useRouter();
-  const { getOrderById, acceptOrder, completeOrder, currentUser, workers, assignOrder } = useAppStore();
+  const { 
+    getOrderById, acceptOrder, departOrder, startOrder, completeOrder, 
+    currentUser, workers, assignOrder, refreshOrders 
+  } = useAppStore();
   const [order, setOrder] = useState<RepairOrder | null>(null);
   const [showCompleteForm, setShowCompleteForm] = useState(false);
   const [repairDescription, setRepairDescription] = useState('');
   const [repairImages, setRepairImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const orderId = router.params.id;
 
-  const loadOrder = useCallback(() => {
+  const loadOrder = useCallback(async () => {
     if (!orderId) return;
+    // 先从后端刷新
+    try {
+      await refreshOrders();
+    } catch (e) {
+      console.error('刷新订单数据失败', e);
+    }
     const orderData = getOrderById(orderId);
     if (orderData) {
       setOrder(orderData);
     } else {
       Taro.showToast({ title: '工单不存在', icon: 'none' });
     }
-  }, [orderId, getOrderById]);
+  }, [orderId, getOrderById, refreshOrders]);
 
   useEffect(() => {
     loadOrder();
   }, [loadOrder]);
 
-  const handleAcceptOrder = () => {
-    if (!order) return;
+  // 页面每次显示时刷新
+  useDidShow(() => {
+    loadOrder();
+  });
+
+  const handleAcceptOrder = async () => {
+    if (!order || actionLoading) return;
     Taro.showModal({
       title: '确认接单',
       content: '确定要接这个工单吗？接单后请尽快前往处理。',
-      success: (res) => {
+      success: async (res) => {
         if (res.confirm) {
-          const success = acceptOrder(order.id);
+          setActionLoading(true);
+          const success = await acceptOrder(order.id);
+          setActionLoading(false);
           if (success) {
             Taro.showToast({ title: '接单成功', icon: 'success' });
             loadOrder();
+          } else {
+            Taro.showToast({ title: '接单失败', icon: 'none' });
           }
         }
       }
     });
   };
 
-  const handleCompleteOrder = () => {
+  const handleDepartOrder = async () => {
+    if (!order || actionLoading) return;
+    Taro.showModal({
+      title: '确认出发',
+      content: '确定已出发前往维修现场吗？',
+      success: async (res) => {
+        if (res.confirm) {
+          setActionLoading(true);
+          const success = await departOrder(order.id);
+          setActionLoading(false);
+          if (success) {
+            Taro.showToast({ title: '已记录出发', icon: 'success' });
+            loadOrder();
+          } else {
+            Taro.showToast({ title: '操作失败', icon: 'none' });
+          }
+        }
+      }
+    });
+  };
+
+  const handleStartOrder = async () => {
+    if (!order || actionLoading) return;
+    Taro.showModal({
+      title: '开始维修',
+      content: '已到达现场，确定开始维修吗？',
+      success: async (res) => {
+        if (res.confirm) {
+          setActionLoading(true);
+          const success = await startOrder(order.id);
+          setActionLoading(false);
+          if (success) {
+            Taro.showToast({ title: '已开始维修', icon: 'success' });
+            loadOrder();
+          } else {
+            Taro.showToast({ title: '操作失败', icon: 'none' });
+          }
+        }
+      }
+    });
+  };
+
+  const handleCompleteOrder = async () => {
     if (!repairDescription.trim()) {
       Taro.showToast({ title: '请填写维修说明', icon: 'none' });
       return;
     }
     setLoading(true);
-    setTimeout(() => {
-      const success = completeOrder(order!.id, repairDescription.trim(), repairImages);
-      setLoading(false);
-      if (success) {
-        Taro.showToast({ title: '完工提交成功', icon: 'success' });
-        setShowCompleteForm(false);
-        loadOrder();
-      }
-    }, 500);
+    const success = await completeOrder(order!.id, repairDescription.trim(), repairImages);
+    setLoading(false);
+    if (success) {
+      Taro.showToast({ title: '完工提交成功', icon: 'success' });
+      setShowCompleteForm(false);
+      loadOrder();
+    } else {
+      Taro.showToast({ title: '提交失败', icon: 'none' });
+    }
   };
 
   const handleChooseImage = async () => {
@@ -133,8 +194,15 @@ const OrderDetailPage: React.FC = () => {
   const isWorker = currentUser.role === 'worker';
   const isAdmin = currentUser.role === 'admin';
 
+  const isMyWorkerOrder = order.workerName === currentUser.name || order.workerId === currentUser.id;
+
   const canAccept = (isWorker || isAdmin) && (order.status === 'assigned' || order.status === 'pending');
-  const canComplete = isWorker && order.status === 'processing' && order.workerName === currentUser.name;
+  const canDepart = (isWorker || isAdmin) && order.status === 'accepted' && (isMyWorkerOrder || isAdmin);
+  const canStartRepair = (isWorker || isAdmin) && order.status === 'departed' && (isMyWorkerOrder || isAdmin);
+  // 已接单/已出发/维修中都可以直接完工（灵活处理）
+  const canComplete = isWorker && 
+    (order.status === 'accepted' || order.status === 'departed' || order.status === 'processing') && 
+    isMyWorkerOrder;
   const canRate = isOwner && order.status === 'completed';
   const canAssign = isAdmin && order.status === 'pending';
 
@@ -317,9 +385,24 @@ const OrderDetailPage: React.FC = () => {
 
       {/* 底部操作栏 */}
       <View className={styles.bottomBar}>
+        {canAssign && (
+          <Button className={styles.primaryBtn} onClick={showAssignDialog} loading={actionLoading}>
+            <Text className={styles.btnText}>分配工单</Text>
+          </Button>
+        )}
         {canAccept && (
-          <Button className={classNames(styles.primaryBtn, order.urgent && styles.urgent)} onClick={handleAcceptOrder}>
+          <Button className={classNames(styles.primaryBtn, order.urgent && styles.urgent)} onClick={handleAcceptOrder} loading={actionLoading}>
             <Text className={styles.btnText}>立即接单</Text>
+          </Button>
+        )}
+        {canDepart && (
+          <Button className={styles.primaryBtn} onClick={handleDepartOrder} loading={actionLoading}>
+            <Text className={styles.btnText}>出发维修</Text>
+          </Button>
+        )}
+        {canStartRepair && (
+          <Button className={styles.primaryBtn} onClick={handleStartOrder} loading={actionLoading}>
+            <Text className={styles.btnText}>开始维修</Text>
           </Button>
         )}
         {canComplete && !showCompleteForm && (
@@ -342,12 +425,7 @@ const OrderDetailPage: React.FC = () => {
             <Text className={styles.btnText}>去评价</Text>
           </Button>
         )}
-        {canAssign && (
-          <Button className={styles.primaryBtn} onClick={showAssignDialog}>
-            <Text className={styles.btnText}>分配工单</Text>
-          </Button>
-        )}
-        {isOwner && order.status === 'processing' && (
+        {isOwner && (order.status === 'accepted' || order.status === 'departed' || order.status === 'processing') && order.workerPhone && (
           <Button className={styles.secondaryBtn} onClick={() => handleCallPhone(order.workerPhone!)}>
             <Text className={styles.btnText}>联系师傅</Text>
           </Button>

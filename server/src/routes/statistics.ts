@@ -11,7 +11,9 @@ router.get('/', (req: Request, res: Response) => {
     
     const totalOrders = orders.length;
     const pendingOrders = orders.filter(o => o.status === 'pending' || o.status === 'assigned').length;
-    const processingOrders = orders.filter(o => o.status === 'processing').length;
+    const processingOrders = orders.filter(o => 
+      o.status === 'accepted' || o.status === 'departed' || o.status === 'processing'
+    ).length;
     const completedOrders = orders.filter(o => o.status === 'rated').length;
     const completionRate = totalOrders > 0 ? Math.round((completedOrders / totalOrders) * 100 * 10) / 10 : 0;
     

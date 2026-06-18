@@ -1,13 +1,20 @@
 import { create } from 'zustand';
-import { RepairOrder, UserInfo, UserRole, OrderStatus, RepairType } from '@/types';
-import { mockOrders, currentUser as mockUser, workers, generateOrderNo, mockStatistics, StatisticsData } from '@/data/mockData';
+import { RepairOrder, UserInfo, UserRole, OrderStatus, RepairType, StatisticsData } from '@/types';
+import { mockOrders, currentUser as mockUser, workers, generateOrderNo, mockStatistics } from '@/data/mockData';
+import { orderApi, workerApi, statisticsApi } from '@/services/api';
 
 interface AppState {
   orders: RepairOrder[];
   currentUser: UserInfo;
   workers: UserInfo[];
-  
+  statistics: StatisticsData;
+  loading: boolean;
+
   switchRole: (role: UserRole) => void;
+  refreshOrders: () => Promise<void>;
+  refreshWorkers: () => Promise<void>;
+  refreshStatistics: () => Promise<void>;
+  refreshAll: () => Promise<void>;
   getOrdersByRole: () => RepairOrder[];
   getOrdersByStatus: (status?: OrderStatus) => RepairOrder[];
   getOrderById: (id: string) => RepairOrder | undefined;
@@ -17,11 +24,13 @@ interface AppState {
     images: string[];
     urgent: boolean;
     typeName: string;
-  }) => RepairOrder;
-  assignOrder: (orderId: string, workerId: string) => boolean;
-  acceptOrder: (orderId: string) => boolean;
-  completeOrder: (orderId: string, description: string, images: string[]) => boolean;
-  rateOrder: (orderId: string, rating: number, content: string) => boolean;
+  }) => Promise<RepairOrder | null>;
+  assignOrder: (orderId: string, workerId: string) => Promise<boolean>;
+  acceptOrder: (orderId: string) => Promise<boolean>;
+  departOrder: (orderId: string) => Promise<boolean>;
+  startOrder: (orderId: string) => Promise<boolean>;
+  completeOrder: (orderId: string, description: string, images: string[]) => Promise<boolean>;
+  rateOrder: (orderId: string, rating: number, content: string) => Promise<boolean>;
   getStatistics: () => StatisticsData;
 }
 
@@ -29,12 +38,69 @@ export const useAppStore = create<AppState>((set, get) => ({
   orders: [...mockOrders],
   currentUser: { ...mockUser },
   workers: [...workers],
+  statistics: { ...mockStatistics },
+  loading: false,
 
   switchRole: (role: UserRole) => {
     set(state => ({
       currentUser: { ...state.currentUser, role }
     }));
     console.log('[AppStore] 切换角色:', role);
+    // 切换角色时刷新数据
+    get().refreshOrders();
+  },
+
+  refreshOrders: async () => {
+    try {
+      let params: any = {};
+      const state = get();
+      if (state.currentUser.role === 'worker') {
+        params.workerId = state.currentUser.id === 'worker001' ? undefined : undefined;
+      }
+      const result = await orderApi.getList(params);
+      let list = result.list;
+      
+      // 按角色过滤（业主只能看自己的）
+      if (state.currentUser.role === 'owner') {
+        list = list.filter(o => o.ownerName === state.currentUser.name);
+      }
+      
+      set({ orders: list });
+      console.log('[AppStore] 刷新工单列表成功，共', list.length, '条');
+    } catch (error) {
+      console.error('[AppStore] 刷新工单列表失败:', error);
+    }
+  },
+
+  refreshWorkers: async () => {
+    try {
+      const list = await workerApi.getList();
+      set({ workers: list });
+    } catch (error) {
+      console.error('[AppStore] 刷新师傅列表失败:', error);
+    }
+  },
+
+  refreshStatistics: async () => {
+    try {
+      const data = await statisticsApi.getOverview();
+      set({ statistics: data });
+    } catch (error) {
+      console.error('[AppStore] 刷新统计数据失败:', error);
+    }
+  },
+
+  refreshAll: async () => {
+    set({ loading: true });
+    try {
+      await Promise.all([
+        get().refreshOrders(),
+        get().refreshWorkers(),
+        get().refreshStatistics()
+      ]);
+    } finally {
+      set({ loading: false });
+    }
   },
 
   getOrdersByRole: (): RepairOrder[] => {
@@ -47,8 +113,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (state.currentUser.role === 'owner') {
       return sorted.filter(o => o.ownerName === state.currentUser.name);
     } else if (state.currentUser.role === 'worker') {
+      // 维修师傅看：分配给自己的 + 待分配的也可以抢单
       return sorted.filter(o => 
         o.workerName === state.currentUser.name || 
+        o.workerId === state.currentUser.id ||
         o.status === 'pending' || 
         o.status === 'assigned'
       );
@@ -66,179 +134,138 @@ export const useAppStore = create<AppState>((set, get) => ({
     return get().orders.find(o => o.id === id);
   },
 
-  submitRepair: (params): RepairOrder => {
+  submitRepair: async (params): Promise<RepairOrder | null> => {
     const state = get();
-    const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
-    const newOrder: RepairOrder = {
-      id: `order_${Date.now()}`,
-      orderNo: generateOrderNo(),
-      type: params.type,
-      typeName: params.typeName,
-      description: params.description,
-      images: params.images,
-      urgent: params.urgent,
-      status: 'pending',
-      statusName: '待分配',
-      ownerName: state.currentUser.name,
-      ownerPhone: state.currentUser.phone,
-      address: state.currentUser.address || '',
-      submitTime: now,
-      repairImages: [],
-      progress: [
-        {
-          status: 'pending',
-          time: now,
-          description: params.urgent ? '紧急工单已提交，等待优先处理' : '工单已提交，等待分配',
-          operator: state.currentUser.name
-        }
-      ]
-    };
-    set(state => ({
-      orders: [newOrder, ...state.orders]
-    }));
-    console.log('[AppStore] 提交报修:', newOrder.orderNo);
-    return newOrder;
+    try {
+      const newOrder = await orderApi.create({
+        type: params.type,
+        typeName: params.typeName,
+        description: params.description,
+        images: params.images,
+        urgent: params.urgent,
+        ownerName: state.currentUser.name,
+        ownerPhone: state.currentUser.phone,
+        address: state.currentUser.address || ''
+      });
+      
+      set(s => ({
+        orders: [newOrder, ...s.orders]
+      }));
+      
+      console.log('[AppStore] 提交报修成功:', newOrder.orderNo);
+      return newOrder;
+    } catch (error) {
+      console.error('[AppStore] 提交报修失败:', error);
+      // 兜底使用本地mock方式
+      const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+      const fallbackOrder: RepairOrder = {
+        id: `order_${Date.now()}`,
+        orderNo: generateOrderNo(),
+        type: params.type,
+        typeName: params.typeName,
+        description: params.description,
+        images: params.images,
+        urgent: params.urgent,
+        status: 'pending',
+        statusName: '待分配',
+        ownerName: state.currentUser.name,
+        ownerPhone: state.currentUser.phone,
+        address: state.currentUser.address || '',
+        submitTime: now,
+        repairImages: [],
+        progress: [{ status: 'pending', time: now, description: params.urgent ? '紧急工单已提交，等待优先处理' : '工单已提交，等待分配', operator: state.currentUser.name }]
+      };
+      set(s => ({ orders: [fallbackOrder, ...s.orders] }));
+      return fallbackOrder;
+    }
   },
 
-  assignOrder: (orderId: string, workerId: string): boolean => {
-    const state = get();
-    const orderIndex = state.orders.findIndex(o => o.id === orderId);
-    const worker = state.workers.find(w => w.id === workerId);
-    if (orderIndex === -1 || !worker) return false;
-    
-    const order = state.orders[orderIndex];
-    if (order.status !== 'pending') return false;
-
-    const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
-    const updatedOrder = {
-      ...order,
-      status: 'assigned' as OrderStatus,
-      statusName: '待接单',
-      assignTime: now,
-      workerName: worker.name,
-      workerPhone: worker.phone,
-      progress: [
-        ...order.progress,
-        {
-          status: 'assigned' as OrderStatus,
-          time: now,
-          description: `工单已分配给${worker.name}`,
-          operator: '客服'
-        }
-      ]
-    };
-
-    const newOrders = [...state.orders];
-    newOrders[orderIndex] = updatedOrder;
-    set({ orders: newOrders });
-    console.log('[AppStore] 分配工单:', order.orderNo, '给', worker.name);
-    return true;
+  assignOrder: async (orderId: string, workerId: string): Promise<boolean> => {
+    try {
+      const updatedOrder = await orderApi.assign(orderId, workerId, get().currentUser.name);
+      set(s => ({
+        orders: s.orders.map(o => o.id === orderId ? updatedOrder : o)
+      }));
+      console.log('[AppStore] 分配工单成功');
+      return true;
+    } catch (error) {
+      console.error('[AppStore] 分配工单失败:', error);
+      return false;
+    }
   },
 
-  acceptOrder: (orderId: string): boolean => {
-    const state = get();
-    const orderIndex = state.orders.findIndex(o => o.id === orderId);
-    if (orderIndex === -1) return false;
-    
-    const order = state.orders[orderIndex];
-    if (order.status !== 'assigned' && order.status !== 'pending') return false;
-
-    const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
-    const updatedOrder = {
-      ...order,
-      status: 'processing' as OrderStatus,
-      statusName: '维修中',
-      acceptTime: now,
-      workerName: order.workerName || state.currentUser.name,
-      workerPhone: order.workerPhone || state.currentUser.phone,
-      progress: [
-        ...order.progress,
-        {
-          status: 'processing' as OrderStatus,
-          time: now,
-          description: `${state.currentUser.name}已接单，正在前往维修`,
-          operator: state.currentUser.name
-        }
-      ]
-    };
-
-    const newOrders = [...state.orders];
-    newOrders[orderIndex] = updatedOrder;
-    set({ orders: newOrders });
-    console.log('[AppStore] 接单:', order.orderNo);
-    return true;
+  acceptOrder: async (orderId: string): Promise<boolean> => {
+    try {
+      const updatedOrder = await orderApi.accept(orderId);
+      set(s => ({
+        orders: s.orders.map(o => o.id === orderId ? updatedOrder : o)
+      }));
+      console.log('[AppStore] 接单成功');
+      return true;
+    } catch (error) {
+      console.error('[AppStore] 接单失败:', error);
+      return false;
+    }
   },
 
-  completeOrder: (orderId: string, description: string, images: string[]): boolean => {
-    const state = get();
-    const orderIndex = state.orders.findIndex(o => o.id === orderId);
-    if (orderIndex === -1) return false;
-    
-    const order = state.orders[orderIndex];
-    if (order.status !== 'processing') return false;
-
-    const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
-    const updatedOrder = {
-      ...order,
-      status: 'completed' as OrderStatus,
-      statusName: '待评价',
-      completeTime: now,
-      repairDescription: description,
-      repairImages: images,
-      progress: [
-        ...order.progress,
-        {
-          status: 'completed' as OrderStatus,
-          time: now,
-          description: '维修完成，请业主确认',
-          operator: state.currentUser.name
-        }
-      ]
-    };
-
-    const newOrders = [...state.orders];
-    newOrders[orderIndex] = updatedOrder;
-    set({ orders: newOrders });
-    console.log('[AppStore] 完工:', order.orderNo);
-    return true;
+  departOrder: async (orderId: string): Promise<boolean> => {
+    try {
+      const updatedOrder = await orderApi.depart(orderId);
+      set(s => ({
+        orders: s.orders.map(o => o.id === orderId ? updatedOrder : o)
+      }));
+      console.log('[AppStore] 出发成功');
+      return true;
+    } catch (error) {
+      console.error('[AppStore] 出发失败:', error);
+      return false;
+    }
   },
 
-  rateOrder: (orderId: string, rating: number, content: string): boolean => {
-    const state = get();
-    const orderIndex = state.orders.findIndex(o => o.id === orderId);
-    if (orderIndex === -1) return false;
-    
-    const order = state.orders[orderIndex];
-    if (order.status !== 'completed') return false;
+  startOrder: async (orderId: string): Promise<boolean> => {
+    try {
+      const updatedOrder = await orderApi.start(orderId);
+      set(s => ({
+        orders: s.orders.map(o => o.id === orderId ? updatedOrder : o)
+      }));
+      console.log('[AppStore] 开始维修成功');
+      return true;
+    } catch (error) {
+      console.error('[AppStore] 开始维修失败:', error);
+      return false;
+    }
+  },
 
-    const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
-    const updatedOrder = {
-      ...order,
-      status: 'rated' as OrderStatus,
-      statusName: '已完成',
-      rateTime: now,
-      rating,
-      ratingContent: content,
-      progress: [
-        ...order.progress,
-        {
-          status: 'rated' as OrderStatus,
-          time: now,
-          description: `业主已评价（${rating}星）`,
-          operator: state.currentUser.name
-        }
-      ]
-    };
+  completeOrder: async (orderId: string, description: string, images: string[]): Promise<boolean> => {
+    try {
+      const updatedOrder = await orderApi.complete(orderId, { repairDescription: description, repairImages: images });
+      set(s => ({
+        orders: s.orders.map(o => o.id === orderId ? updatedOrder : o)
+      }));
+      console.log('[AppStore] 完工成功');
+      return true;
+    } catch (error) {
+      console.error('[AppStore] 完工失败:', error);
+      return false;
+    }
+  },
 
-    const newOrders = [...state.orders];
-    newOrders[orderIndex] = updatedOrder;
-    set({ orders: newOrders });
-    console.log('[AppStore] 评价:', order.orderNo, rating, '星');
-    return true;
+  rateOrder: async (orderId: string, rating: number, content: string): Promise<boolean> => {
+    try {
+      const updatedOrder = await orderApi.rate(orderId, rating, content);
+      set(s => ({
+        orders: s.orders.map(o => o.id === orderId ? updatedOrder : o)
+      }));
+      console.log('[AppStore] 评价成功');
+      return true;
+    } catch (error) {
+      console.error('[AppStore] 评价失败:', error);
+      return false;
+    }
   },
 
   getStatistics: (): StatisticsData => {
-    return { ...mockStatistics };
+    return get().statistics;
   }
 }));
 

@@ -2,12 +2,21 @@ import { create } from 'zustand';
 import { RepairOrder, UserInfo, OrderStatus, StatisticsData, RepairType } from '@/types';
 import { orderApi, workerApi, statisticsApi } from '@/services/api';
 
+interface WorkerStat {
+  worker: UserInfo;
+  orderCount: number;
+  completedCount: number;
+  avgRating: number;
+}
+
 interface AppState {
   orders: RepairOrder[];
   workers: UserInfo[];
   currentUser: UserInfo;
   statistics: StatisticsData | null;
+  workerStats: WorkerStat[];
   loading: boolean;
+  statisticsLoading: boolean;
   
   // 筛选状态
   searchKeyword: string;
@@ -25,13 +34,14 @@ interface AppState {
   fetchOrders: () => Promise<void>;
   fetchWorkers: () => Promise<void>;
   fetchStatistics: () => Promise<void>;
+  fetchWorkerStats: () => Promise<void>;
   initData: () => Promise<void>;
   
   getFilteredOrders: () => RepairOrder[];
   getOrderById: (id: string) => RepairOrder | undefined;
   assignOrder: (orderId: string, workerId: string) => Promise<boolean>;
   getStatistics: () => StatisticsData | null;
-  getWorkerStats: () => { worker: UserInfo; orderCount: number; avgRating: number }[];
+  getWorkerStats: () => WorkerStat[];
   exportOrders: () => string;
   exportStatistics: () => string;
 }
@@ -53,7 +63,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   orders: [],
   workers: [],
   statistics: null,
+  workerStats: [],
   loading: false,
+  statisticsLoading: false,
   
   currentUser: {
     id: 'admin001',
@@ -79,6 +91,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       set({ orders: result.list });
     } catch (error) {
       console.error('[Store] 加载工单列表失败:', error);
+      set({ orders: [] });
     }
   },
 
@@ -88,15 +101,28 @@ export const useAppStore = create<AppState>((set, get) => ({
       set({ workers });
     } catch (error) {
       console.error('[Store] 加载维修师傅列表失败:', error);
+      set({ workers: [] });
     }
   },
 
   fetchStatistics: async () => {
+    set({ statisticsLoading: true });
     try {
       const statistics = await statisticsApi.getOverview();
-      set({ statistics });
+      set({ statistics, statisticsLoading: false });
     } catch (error) {
       console.error('[Store] 加载统计数据失败:', error);
+      set({ statistics: defaultStatistics, statisticsLoading: false });
+    }
+  },
+
+  fetchWorkerStats: async () => {
+    try {
+      const stats = await statisticsApi.getWorkerStats();
+      set({ workerStats: stats });
+    } catch (error) {
+      console.error('[Store] 加载师傅工作量统计失败:', error);
+      set({ workerStats: [] });
     }
   },
 
@@ -106,7 +132,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       await Promise.all([
         get().fetchOrders(),
         get().fetchWorkers(),
-        get().fetchStatistics()
+        get().fetchStatistics(),
+        get().fetchWorkerStats()
       ]);
     } finally {
       set({ loading: false });
@@ -178,6 +205,16 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   getWorkerStats: () => {
     const state = get();
+    // 优先使用API返回的统计，如果没有就用本地计算的兜底
+    if (state.workerStats && state.workerStats.length > 0) {
+      return state.workerStats.map(ws => ({
+        worker: ws.worker,
+        orderCount: ws.orderCount,
+        completedCount: ws.completedCount,
+        avgRating: ws.avgRating
+      }));
+    }
+    // 本地兜底计算
     return state.workers.map(worker => {
       const workerOrders = state.orders.filter(o => o.workerId === worker.id);
       const ratedOrders = workerOrders.filter(o => o.rating);
@@ -187,6 +224,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       return {
         worker,
         orderCount: workerOrders.length,
+        completedCount: workerOrders.filter(o => o.status === 'rated').length,
         avgRating: Math.round(avgRating * 10) / 10
       };
     });
@@ -210,7 +248,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       o.rating ? `${o.rating}星` : ''
     ]);
     
-    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+    // 添加 UTF-8 BOM，解决Excel打开中文乱码问题
+    const BOM = '\uFEFF';
+    const csv = BOM + [headers, ...rows].map(row => row.join(',')).join('\n');
     console.log('[Store] 导出工单明细:', orders.length, '条');
     return csv;
   },
