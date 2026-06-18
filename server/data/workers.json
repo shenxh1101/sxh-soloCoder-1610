@@ -1,0 +1,30 @@
+[
+  {
+    "id": "worker001",
+    "name": "李师傅",
+    "phone": "13900139001",
+    "role": "worker",
+    "avatar": "https://picsum.photos/id/1012/200/200"
+  },
+  {
+    "id": "worker002",
+    "name": "王师傅",
+    "phone": "13900139002",
+    "role": "worker",
+    "avatar": "https://picsum.photos/id/1025/200/200"
+  },
+  {
+    "id": "worker003",
+    "name": "赵师傅",
+    "phone": "13900139003",
+    "role": "worker",
+    "avatar": "https://picsum.photos/id/1074/200/200"
+  },
+  {
+    "id": "worker004",
+    "name": "张师傅",
+    "phone": "13900139004",
+    "role": "worker",
+    "avatar": "https://picsum.photos/id/1062/200/200"
+  }
+]

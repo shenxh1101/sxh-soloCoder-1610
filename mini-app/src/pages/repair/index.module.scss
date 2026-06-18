@@ -1,0 +1,290 @@
+@use '@/styles/variables.scss' as *;
+
+.pageContainer {
+  min-height: 100vh;
+  background: $color-bg-page;
+  padding-bottom: 180rpx;
+}
+
+.formSection {
+  background: $color-bg-card;
+  margin: $spacing-lg;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  display: block;
+}
+
+.typeGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: $spacing-md;
+}
+
+.typeItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-md $spacing-sm;
+  border-radius: $radius-md;
+  background: $color-bg-page;
+  border: 2rpx solid transparent;
+  transition: all $transition-base;
+
+  &.selected {
+    background: $color-primary-bg;
+    border-color: $color-primary;
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.typeIcon {
+  font-size: 48rpx;
+}
+
+.typeLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+
+  .selected & {
+    color: $color-primary;
+    font-weight: $font-weight-medium;
+  }
+}
+
+.formItem {
+  margin-bottom: $spacing-lg;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.formLabel {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  margin-bottom: $spacing-sm;
+  display: block;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 200rpx;
+  padding: $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  border: 1rpx solid $color-border;
+  box-sizing: border-box;
+  line-height: 1.6;
+}
+
+.textareaPlaceholder {
+  color: $color-text-tertiary;
+}
+
+.charCount {
+  text-align: right;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-top: $spacing-xs;
+}
+
+.uploadSection {
+  margin-top: $spacing-md;
+}
+
+.imageList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.imageItem {
+  position: relative;
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: $radius-md;
+  overflow: hidden;
+}
+
+.uploadImage {
+  width: 100%;
+  height: 100%;
+}
+
+.deleteBtn {
+  position: absolute;
+  top: 4rpx;
+  right: 4rpx;
+  width: 40rpx;
+  height: 40rpx;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.deleteText {
+  color: white;
+  font-size: 24rpx;
+  line-height: 1;
+}
+
+.addBtn {
+  width: 180rpx;
+  height: 180rpx;
+  border: 2rpx dashed $color-border;
+  border-radius: $radius-md;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+  background: $color-bg-page;
+}
+
+.addIcon {
+  font-size: 48rpx;
+  color: $color-text-tertiary;
+}
+
+.addText {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.urgentSection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md;
+  background: $color-urgent-bg;
+  border-radius: $radius-md;
+  border: 1rpx solid $color-urgent-border;
+}
+
+.urgentLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.urgentIcon {
+  font-size: 36rpx;
+}
+
+.urgentText {
+  font-size: $font-size-md;
+  color: $color-urgent;
+  font-weight: $font-weight-medium;
+}
+
+.urgentDesc {
+  font-size: $font-size-xs;
+  color: $color-urgent;
+  opacity: 0.8;
+  margin-top: 4rpx;
+}
+
+.switch {
+  width: 88rpx;
+  height: 48rpx;
+  border-radius: 48rpx;
+  background: $color-border;
+  position: relative;
+  transition: all $transition-base;
+
+  &.active {
+    background: $color-urgent;
+  }
+}
+
+.switchDot {
+  position: absolute;
+  top: 4rpx;
+  left: 4rpx;
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  background: white;
+  transition: all $transition-base;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
+
+  .active & {
+    left: 44rpx;
+  }
+}
+
+.tipsSection {
+  margin-top: $spacing-md;
+  padding: $spacing-md;
+  background: $color-warning-bg;
+  border-radius: $radius-md;
+}
+
+.tipsTitle {
+  font-size: $font-size-sm;
+  color: $color-warning;
+  font-weight: $font-weight-medium;
+  margin-bottom: $spacing-xs;
+}
+
+.tipsText {
+  font-size: $font-size-xs;
+  color: $color-warning;
+  line-height: 1.6;
+}
+
+.submitBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: $spacing-md $spacing-lg;
+  padding-bottom: calc(#{$spacing-md} + env(safe-area-inset-bottom));
+  background: $color-bg-card;
+  box-shadow: 0 -2rpx 12rpx rgba(0, 0, 0, 0.06);
+  z-index: 100;
+}
+
+.submitBtn {
+  width: 100%;
+  height: $button-height-lg;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-button;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+
+  &.disabled {
+    background: $color-text-disabled;
+  }
+}
+
+.submitBtnText {
+  font-size: $font-size-lg;
+  color: $color-text-white;
+  font-weight: $font-weight-semibold;
+}

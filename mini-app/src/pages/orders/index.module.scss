@@ -1,0 +1,123 @@
+@use '@/styles/variables.scss' as *;
+
+.pageContainer {
+  min-height: 100vh;
+  background: $color-bg-page;
+  display: flex;
+  flex-direction: column;
+}
+
+.tabsContainer {
+  background: $color-bg-card;
+  padding: $spacing-md $spacing-lg;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: $shadow-card;
+}
+
+.tabs {
+  display: flex;
+  background: $color-bg-page;
+  border-radius: $radius-button;
+  padding: 6rpx;
+}
+
+.tabItem {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx 0;
+  border-radius: $radius-button;
+  transition: all $transition-base;
+}
+
+.tabActive {
+  background: $color-primary;
+  
+  .tabText {
+    color: $color-text-white;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.tabText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.orderList {
+  flex: 1;
+  padding: $spacing-lg;
+  padding-bottom: 120rpx;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 120rpx 0;
+}
+
+.emptyIcon {
+  font-size: 100rpx;
+  margin-bottom: $spacing-md;
+  display: block;
+}
+
+.emptyTitle {
+  font-size: $font-size-lg;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  display: block;
+  margin-bottom: $spacing-sm;
+}
+
+.emptyDesc {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.filterBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 $spacing-lg $spacing-md;
+}
+
+.filterLeft {
+  display: flex;
+  gap: $spacing-sm;
+}
+
+.filterTag {
+  padding: 8rpx 20rpx;
+  background: $color-bg-card;
+  border-radius: $radius-round;
+  border: 1rpx solid $color-border;
+  
+  &.active {
+    background: $color-primary-bg;
+    border-color: $color-primary;
+    
+    .filterTagText {
+      color: $color-primary;
+      font-weight: $font-weight-medium;
+    }
+  }
+}
+
+.filterTagText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.urgentFilter {
+  padding: 8rpx 20rpx;
+  background: $color-urgent-bg;
+  border-radius: $radius-round;
+  border: 1rpx solid $color-urgent-border;
+}
+
+.urgentFilterText {
+  font-size: $font-size-sm;
+  color: $color-urgent;
+  font-weight: $font-weight-medium;
+}

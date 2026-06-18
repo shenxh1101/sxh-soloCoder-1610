@@ -1,0 +1,192 @@
+[
+  {
+    "id": "80b3fd8e-65be-44eb-b129-e419eef82f8a",
+    "orderNo": "WD202606190708",
+    "type": "water_electric",
+    "typeName": "????",
+    "description": "?????? - ???????",
+    "images": [],
+    "urgent": false,
+    "status": "pending",
+    "statusName": "待分配",
+    "ownerName": "????",
+    "ownerPhone": "13800000000",
+    "address": "?????????",
+    "submitTime": "2026-06-18 18:01:13",
+    "repairImages": [],
+    "progress": [
+      {
+        "status": "pending",
+        "time": "2026-06-18 18:01:13",
+        "description": "工单已提交，等待分配",
+        "operator": "????"
+      }
+    ]
+  },
+  {
+    "id": "2bf9c4ba-463d-4956-a295-c5e860faece0",
+    "orderNo": "WD202606190001",
+    "type": "water_electric",
+    "typeName": "水电维修",
+    "description": "厨房水龙头漏水严重，需要尽快维修，已经影响正常使用了",
+    "images": [
+      "https://picsum.photos/id/292/600/400",
+      "https://picsum.photos/id/312/600/400"
+    ],
+    "urgent": true,
+    "status": "processing",
+    "statusName": "维修中",
+    "ownerName": "张先生",
+    "ownerPhone": "13800138000",
+    "address": "阳光花园小区1栋2单元301室",
+    "submitTime": "2026-06-19 08:30:00",
+    "assignTime": "2026-06-19 08:45:00",
+    "acceptTime": "2026-06-19 09:00:00",
+    "workerName": "李师傅",
+    "workerPhone": "13900139001",
+    "workerId": "worker001",
+    "repairImages": [],
+    "progress": [
+      {
+        "status": "pending",
+        "time": "2026-06-19 08:30:00",
+        "description": "工单已提交，等待分配",
+        "operator": "张先生"
+      },
+      {
+        "status": "assigned",
+        "time": "2026-06-19 08:45:00",
+        "description": "工单已分配给李师傅",
+        "operator": "客服小王"
+      },
+      {
+        "status": "processing",
+        "time": "2026-06-19 09:00:00",
+        "description": "李师傅已接单，正在前往维修",
+        "operator": "李师傅"
+      }
+    ]
+  },
+  {
+    "id": "49c67800-14ee-47ff-94a4-51983e29c055",
+    "orderNo": "WD202606180023",
+    "type": "access_control",
+    "typeName": "门禁维修",
+    "description": "单元门门禁刷卡没反应，按门铃也不响，进出很不方便",
+    "images": [
+      "https://picsum.photos/id/160/600/400"
+    ],
+    "urgent": false,
+    "status": "rated",
+    "statusName": "已完成",
+    "ownerName": "刘女士",
+    "ownerPhone": "13800138002",
+    "address": "阳光花园小区2栋1单元101室",
+    "submitTime": "2026-06-18 14:20:00",
+    "assignTime": "2026-06-18 14:35:00",
+    "acceptTime": "2026-06-18 15:00:00",
+    "completeTime": "2026-06-18 16:30:00",
+    "rateTime": "2026-06-18 19:00:00",
+    "workerName": "王师傅",
+    "workerPhone": "13900139002",
+    "workerId": "worker002",
+    "repairDescription": "更换了门禁读卡器和门铃按钮，已测试正常使用",
+    "repairImages": [
+      "https://picsum.photos/id/201/600/400"
+    ],
+    "rating": 5,
+    "ratingContent": "师傅很专业，维修速度快，非常满意！",
+    "progress": [
+      {
+        "status": "pending",
+        "time": "2026-06-18 14:20:00",
+        "description": "工单已提交，等待分配",
+        "operator": "刘女士"
+      },
+      {
+        "status": "assigned",
+        "time": "2026-06-18 14:35:00",
+        "description": "工单已分配给王师傅",
+        "operator": "客服小王"
+      },
+      {
+        "status": "processing",
+        "time": "2026-06-18 15:00:00",
+        "description": "王师傅已接单，开始维修",
+        "operator": "王师傅"
+      },
+      {
+        "status": "completed",
+        "time": "2026-06-18 16:30:00",
+        "description": "维修完成，请确认",
+        "operator": "王师傅"
+      },
+      {
+        "status": "rated",
+        "time": "2026-06-18 19:00:00",
+        "description": "业主已评价（5星）",
+        "operator": "刘女士"
+      }
+    ]
+  },
+  {
+    "id": "11327587-0f7c-4124-940e-ce76199658b3",
+    "orderNo": "WD202606170045",
+    "type": "elevator",
+    "typeName": "电梯维修",
+    "description": "3号电梯运行时有异响，偶尔会出现停顿，感觉不太安全",
+    "images": [],
+    "urgent": true,
+    "status": "rated",
+    "statusName": "已完成",
+    "ownerName": "陈先生",
+    "ownerPhone": "13800138003",
+    "address": "阳光花园小区3栋3单元",
+    "submitTime": "2026-06-17 10:00:00",
+    "assignTime": "2026-06-17 10:10:00",
+    "acceptTime": "2026-06-17 10:30:00",
+    "completeTime": "2026-06-17 14:00:00",
+    "rateTime": "2026-06-17 18:30:00",
+    "workerName": "赵师傅",
+    "workerPhone": "13900139003",
+    "workerId": "worker003",
+    "repairDescription": "电梯钢丝绳磨损，已更换新的钢丝绳并做了全面安全检查",
+    "repairImages": [
+      "https://picsum.photos/id/3/600/400"
+    ],
+    "rating": 5,
+    "ratingContent": "师傅很专业，维修速度快，解释也很清楚，非常满意！",
+    "progress": [
+      {
+        "status": "pending",
+        "time": "2026-06-17 10:00:00",
+        "description": "工单已提交，等待分配",
+        "operator": "陈先生"
+      },
+      {
+        "status": "assigned",
+        "time": "2026-06-17 10:10:00",
+        "description": "紧急工单，立即分配给赵师傅",
+        "operator": "客服主管"
+      },
+      {
+        "status": "processing",
+        "time": "2026-06-17 10:30:00",
+        "description": "赵师傅已到达现场，开始检修",
+        "operator": "赵师傅"
+      },
+      {
+        "status": "completed",
+        "time": "2026-06-17 14:00:00",
+        "description": "维修完成，电梯恢复正常运行",
+        "operator": "赵师傅"
+      },
+      {
+        "status": "rated",
+        "time": "2026-06-17 18:30:00",
+        "description": "业主已评价（5星）",
+        "operator": "陈先生"
+      }
+    ]
+  }
+]
